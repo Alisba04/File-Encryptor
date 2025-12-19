@@ -1,0 +1,554 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Advanced File Encryptor</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gradient-to-br from-slate-900 via-purple-900 to-slate-900 min-h-screen">
+    <div id="root"></div>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react/18.2.0/umd/react.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/react-dom/18.2.0/umd/react-dom.production.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/babel-standalone/7.23.5/babel.min.js"></script>
+    
+    <script type="text/babel">
+        const { useState, useRef } = React;
+        
+        // Lucide icons as SVG components
+        const Lock = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" /></svg>;
+        const Unlock = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" /></svg>;
+        const Download = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>;
+        const Upload = () => <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12" /></svg>;
+        const File = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" /></svg>;
+        const AlertCircle = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+        const CheckCircle = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+        const Info = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+        const Trash2 = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" /></svg>;
+        const Key = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 7a2 2 0 012 2m4 0a6 6 0 01-7.743 5.743L11 17H9v2H7v2H4a1 1 0 01-1-1v-2.586a1 1 0 01.293-.707l5.964-5.964A6 6 0 1121 9z" /></svg>;
+        const Shield = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" /></svg>;
+        const Clock = () => <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>;
+        const Eye = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" /></svg>;
+        const EyeOff = () => <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13.875 18.825A10.05 10.05 0 0112 19c-4.478 0-8.268-2.943-9.543-7a9.97 9.97 0 011.563-3.029m5.858.908a3 3 0 114.243 4.243M9.878 9.878l4.242 4.242M9.88 9.88l-3.29-3.29m7.532 7.532l3.29 3.29M3 3l3.59 3.59m0 0A9.953 9.953 0 0112 5c4.478 0 8.268 2.943 9.543 7a10.025 10.025 0 01-4.132 5.411m0 0L21 21" /></svg>;
+
+        const FileEncryptor = () => {
+            const [files, setFiles] = useState([]);
+            const [password, setPassword] = useState('');
+            const [showPassword, setShowPassword] = useState(false);
+            const [mode, setMode] = useState('encrypt');
+            const [status, setStatus] = useState('');
+            const [processing, setProcessing] = useState(false);
+            const [processedFiles, setProcessedFiles] = useState([]);
+            const [encryptionMethod, setEncryptionMethod] = useState('aes-256');
+            const [compressionEnabled, setCompressionEnabled] = useState(true);
+            const fileInputRef = useRef(null);
+
+            const arrayBufferToBase64 = (buffer) => {
+                let binary = '';
+                const bytes = new Uint8Array(buffer);
+                for (let i = 0; i < bytes.byteLength; i++) {
+                    binary += String.fromCharCode(bytes[i]);
+                }
+                return btoa(binary);
+            };
+
+            const base64ToArrayBuffer = (base64) => {
+                const binary = atob(base64);
+                const bytes = new Uint8Array(binary.length);
+                for (let i = 0; i < binary.length; i++) {
+                    bytes[i] = binary.charCodeAt(i);
+                }
+                return bytes.buffer;
+            };
+
+            const compressData = async (data) => {
+                const stream = new Blob([data]).stream();
+                const compressedStream = stream.pipeThrough(new CompressionStream('gzip'));
+                const compressedBlob = await new Response(compressedStream).blob();
+                return await compressedBlob.arrayBuffer();
+            };
+
+            const decompressData = async (data) => {
+                const stream = new Blob([data]).stream();
+                const decompressedStream = stream.pipeThrough(new DecompressionStream('gzip'));
+                const decompressedBlob = await new Response(decompressedStream).blob();
+                return await decompressedBlob.arrayBuffer();
+            };
+
+            const generatePassword = () => {
+                const length = 20;
+                const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=[]{}|;:,.<>?';
+                const array = new Uint8Array(length);
+                crypto.getRandomValues(array);
+                const password = Array.from(array)
+                    .map(x => charset[x % charset.length])
+                    .join('');
+                setPassword(password);
+            };
+
+            const calculatePasswordStrength = (pass) => {
+                let strength = 0;
+                if (pass.length >= 8) strength++;
+                if (pass.length >= 12) strength++;
+                if (pass.length >= 16) strength++;
+                if (/[a-z]/.test(pass) && /[A-Z]/.test(pass)) strength++;
+                if (/\d/.test(pass)) strength++;
+                if (/[^a-zA-Z0-9]/.test(pass)) strength++;
+                if (strength <= 2) return { text: 'Weak', color: 'text-red-400', bg: 'bg-red-500' };
+                if (strength <= 4) return { text: 'Medium', color: 'text-yellow-400', bg: 'bg-yellow-500' };
+                return { text: 'Strong', color: 'text-green-400', bg: 'bg-green-500' };
+            };
+
+            const deriveKey = async (password, salt) => {
+                const encoder = new TextEncoder();
+                const keyMaterial = await crypto.subtle.importKey(
+                    'raw',
+                    encoder.encode(password),
+                    'PBKDF2',
+                    false,
+                    ['deriveBits', 'deriveKey']
+                );
+                const iterations = encryptionMethod === 'aes-256' ? 100000 : 210000;
+                return crypto.subtle.deriveKey(
+                    { name: 'PBKDF2', salt: salt, iterations: iterations, hash: 'SHA-256' },
+                    keyMaterial,
+                    { name: 'AES-GCM', length: encryptionMethod === 'aes-256' ? 256 : 128 },
+                    false,
+                    ['encrypt', 'decrypt']
+                );
+            };
+
+            const encryptSingleFile = async (file) => {
+                const startTime = Date.now();
+                let fileData = await file.arrayBuffer();
+                if (compressionEnabled) {
+                    fileData = await compressData(fileData);
+                }
+                const salt = crypto.getRandomValues(new Uint8Array(16));
+                const iv = crypto.getRandomValues(new Uint8Array(12));
+                const key = await deriveKey(password, salt);
+                const encryptedContent = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, key, fileData);
+                const metadata = {
+                    originalName: file.name,
+                    originalSize: file.size,
+                    compressed: compressionEnabled,
+                    method: encryptionMethod,
+                    timestamp: new Date().toISOString()
+                };
+                const metadataStr = JSON.stringify(metadata);
+                const metadataBytes = new TextEncoder().encode(metadataStr);
+                const metadataLength = new Uint32Array([metadataBytes.length]);
+                const encryptedArray = new Uint8Array(
+                    4 + metadataBytes.length + salt.length + iv.length + encryptedContent.byteLength
+                );
+                encryptedArray.set(new Uint8Array(metadataLength.buffer), 0);
+                encryptedArray.set(metadataBytes, 4);
+                encryptedArray.set(salt, 4 + metadataBytes.length);
+                encryptedArray.set(iv, 4 + metadataBytes.length + salt.length);
+                encryptedArray.set(new Uint8Array(encryptedContent), 4 + metadataBytes.length + salt.length + iv.length);
+                const processingTime = ((Date.now() - startTime) / 1000).toFixed(2);
+                const compressionRatio = compressionEnabled ? ((encryptedArray.length / file.size) * 100).toFixed(1) : 100;
+                return {
+                    data: arrayBufferToBase64(encryptedArray.buffer),
+                    originalName: file.name,
+                    encryptedName: file.name + '.encrypted',
+                    size: encryptedArray.length,
+                    processingTime,
+                    compressionRatio,
+                    metadata
+                };
+            };
+
+            const decryptSingleFile = async (file) => {
+                const startTime = Date.now();
+                const fileData = await file.arrayBuffer();
+                const dataArray = new Uint8Array(fileData);
+                const metadataLength = new Uint32Array(dataArray.slice(0, 4).buffer)[0];
+                const metadataBytes = dataArray.slice(4, 4 + metadataLength);
+                const metadata = JSON.parse(new TextDecoder().decode(metadataBytes));
+                const salt = dataArray.slice(4 + metadataLength, 4 + metadataLength + 16);
+                const iv = dataArray.slice(4 + metadataLength + 16, 4 + metadataLength + 28);
+                const encryptedContent = dataArray.slice(4 + metadataLength + 28);
+                const key = await deriveKey(password, salt);
+                let decryptedContent = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, key, encryptedContent);
+                if (metadata.compressed) {
+                    decryptedContent = await decompressData(decryptedContent);
+                }
+                const processingTime = ((Date.now() - startTime) / 1000).toFixed(2);
+                return {
+                    data: arrayBufferToBase64(decryptedContent),
+                    originalName: metadata.originalName,
+                    decryptedName: metadata.originalName,
+                    size: decryptedContent.byteLength,
+                    processingTime,
+                    metadata
+                };
+            };
+
+            const processFiles = async () => {
+                if (files.length === 0 || !password) {
+                    setStatus('Please select file(s) and enter a password');
+                    return;
+                }
+                setProcessing(true);
+                setStatus(`Processing ${files.length} file(s)...`);
+                setProcessedFiles([]);
+                try {
+                    const results = [];
+                    for (let i = 0; i < files.length; i++) {
+                        setStatus(`Processing file ${i + 1} of ${files.length}...`);
+                        const result = mode === 'encrypt' ? await encryptSingleFile(files[i]) : await decryptSingleFile(files[i]);
+                        results.push(result);
+                    }
+                    setProcessedFiles(results);
+                    setStatus(`Successfully processed ${files.length} file(s)!`);
+                } catch (error) {
+                    setStatus(mode === 'decrypt' ? 'Decryption failed: Wrong password or corrupted file' : 'Encryption failed: ' + error.message);
+                } finally {
+                    setProcessing(false);
+                }
+            };
+
+            const handleFileChange = (e) => {
+                const selectedFiles = Array.from(e.target.files);
+                if (selectedFiles.length > 0) {
+                    setFiles(selectedFiles);
+                    setStatus('');
+                    setProcessedFiles([]);
+                }
+            };
+
+            const downloadFile = (fileData) => {
+                const blob = new Blob([base64ToArrayBuffer(fileData.data)]);
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = mode === 'encrypt' ? fileData.encryptedName : fileData.decryptedName;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            };
+
+            const downloadAllAsZip = async () => {
+                processedFiles.forEach(file => downloadFile(file));
+            };
+
+            const removeFile = (index) => {
+                setFiles(files.filter((_, i) => i !== index));
+            };
+
+            const passwordStrength = password ? calculatePasswordStrength(password) : null;
+
+            return (
+                <div className="min-h-screen p-8">
+                    <div className="max-w-7xl mx-auto">
+                        <div className="text-center mb-8">
+                            <h1 className="text-5xl font-bold text-white mb-3 flex items-center justify-center gap-3">
+                                <Shield />
+                                Advanced File Encryptor
+                            </h1>
+                            <p className="text-purple-300 text-lg">Military-Grade Encryption • Batch Processing • Compression • Zero Knowledge</p>
+                        </div>
+
+                        <div className="bg-blue-500/10 border border-blue-400/30 rounded-lg p-4 mb-8 text-blue-200 text-sm">
+                            <div className="flex items-start gap-2">
+                                <Info />
+                                <div>
+                                    <strong className="block mb-1">🚀 Advanced Features:</strong>
+                                    <ul className="list-disc list-inside space-y-1 ml-1">
+                                        <li>Batch processing - encrypt/decrypt multiple files at once</li>
+                                        <li>Built-in GZIP compression for smaller encrypted files</li>
+                                        <li>Secure password generator with cryptographic randomness</li>
+                                        <li>File metadata preservation (original name, size, timestamp)</li>
+                                        <li>Processing time and compression ratio statistics</li>
+                                    </ul>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                            <div className="lg:col-span-1 space-y-6">
+                                <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700 shadow-xl">
+                                    <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                        <Key />
+                                        Operation Mode
+                                    </h2>
+                                    <div className="grid grid-cols-2 gap-3">
+                                        <button
+                                            onClick={() => { setMode('encrypt'); setStatus(''); setProcessedFiles([]); }}
+                                            className={`py-3 px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
+                                                mode === 'encrypt' ? 'bg-purple-600 text-white shadow-lg' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                                            }`}
+                                        >
+                                            <Lock />
+                                            Encrypt
+                                        </button>
+                                        <button
+                                            onClick={() => { setMode('decrypt'); setStatus(''); setProcessedFiles([]); }}
+                                            className={`py-3 px-4 rounded-lg font-semibold transition-all flex items-center justify-center gap-2 ${
+                                                mode === 'decrypt' ? 'bg-purple-600 text-white shadow-lg' : 'bg-slate-700 text-slate-300 hover:bg-slate-600'
+                                            }`}
+                                        >
+                                            <Unlock />
+                                            Decrypt
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700 shadow-xl">
+                                    <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                        <Shield />
+                                        Settings
+                                    </h2>
+                                    <div className="space-y-4">
+                                        <div>
+                                            <label className="block text-sm font-medium text-slate-300 mb-2">Encryption Method</label>
+                                            <select
+                                                value={encryptionMethod}
+                                                onChange={(e) => setEncryptionMethod(e.target.value)}
+                                                className="w-full px-3 py-2 bg-slate-700 border border-slate-600 rounded-lg text-white text-sm focus:outline-none focus:border-purple-500"
+                                            >
+                                                <option value="aes-256">AES-256-GCM (Recommended)</option>
+                                                <option value="aes-128">AES-128-GCM (Faster)</option>
+                                            </select>
+                                        </div>
+                                        <div className="flex items-center justify-between">
+                                            <span className="text-sm font-medium text-slate-300">Enable Compression</span>
+                                            <button
+                                                onClick={() => setCompressionEnabled(!compressionEnabled)}
+                                                className={`w-12 h-6 rounded-full transition-all ${compressionEnabled ? 'bg-purple-600' : 'bg-slate-600'}`}
+                                            >
+                                                <div className={`w-5 h-5 bg-white rounded-full transition-all ${compressionEnabled ? 'translate-x-6' : 'translate-x-1'}`} />
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {processedFiles.length > 0 && (
+                                    <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700 shadow-xl">
+                                        <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                            <Clock />
+                                            Statistics
+                                        </h2>
+                                        <div className="space-y-2 text-sm text-slate-300">
+                                            <div className="flex justify-between">
+                                                <span>Files Processed:</span>
+                                                <span className="font-semibold text-white">{processedFiles.length}</span>
+                                            </div>
+                                            <div className="flex justify-between">
+                                                <span>Avg Time:</span>
+                                                <span className="font-semibold text-white">
+                                                    {(processedFiles.reduce((acc, f) => acc + parseFloat(f.processingTime), 0) / processedFiles.length).toFixed(2)}s
+                                                </span>
+                                            </div>
+                                            {mode === 'encrypt' && compressionEnabled && (
+                                                <div className="flex justify-between">
+                                                    <span>Avg Compression:</span>
+                                                    <span className="font-semibold text-white">
+                                                        {(processedFiles.reduce((acc, f) => acc + parseFloat(f.compressionRatio), 0) / processedFiles.length).toFixed(1)}%
+                                                    </span>
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            <div className="lg:col-span-2 space-y-6">
+                                <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700 shadow-xl">
+                                    <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                        <Upload />
+                                        Select Files
+                                    </h2>
+                                    <input
+                                        type="file"
+                                        ref={fileInputRef}
+                                        onChange={handleFileChange}
+                                        multiple
+                                        className="hidden"
+                                    />
+                                    <button
+                                        onClick={() => fileInputRef.current?.click()}
+                                        className="w-full p-12 border-2 border-dashed border-slate-600 rounded-lg hover:border-purple-500 hover:bg-slate-700/50 transition-all text-center group"
+                                    >
+                                        <Upload />
+                                        <p className="text-white font-semibold mb-1 group-hover:text-purple-300">Click to select files or drag & drop</p>
+                                        <p className="text-slate-400 text-sm">Multiple files supported</p>
+                                    </button>
+
+                                    {files.length > 0 && (
+                                        <div className="mt-4 space-y-2">
+                                            {files.map((file, index) => (
+                                                <div key={index} className="flex items-center justify-between bg-slate-700/50 p-3 rounded-lg">
+                                                    <div className="flex items-center gap-3 flex-1">
+                                                        <File />
+                                                        <div>
+                                                            <p className="text-white text-sm font-medium">{file.name}</p>
+                                                            <p className="text-slate-400 text-xs">{(file.size / 1024).toFixed(2)} KB</p>
+                                                        </div>
+                                                    </div>
+                                                    <button
+                                                        onClick={() => removeFile(index)}
+                                                        className="text-red-400 hover:text-red-300 p-1"
+                                                    >
+                                                        <Trash2 />
+                                                    </button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                </div>
+
+                                <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700 shadow-xl">
+                                    <h2 className="text-xl font-bold text-white mb-4 flex items-center gap-2">
+                                        <Key />
+                                        Password
+                                    </h2>
+                                    <div className="relative mb-4">
+                                        <input
+                                            type={showPassword ? 'text' : 'password'}
+                                            value={password}
+                                            onChange={(e) => setPassword(e.target.value)}
+                                            placeholder="Enter a strong password"
+                                            className="w-full px-4 py-3 pr-10 bg-slate-700 border border-slate-600 rounded-lg text-white placeholder-slate-400 focus:outline-none focus:border-purple-500 focus:ring-2 focus:ring-purple-500/50"
+                                        />
+                                        <button
+                                            onClick={() => setShowPassword(!showPassword)}
+                                            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-300"
+                                        >
+                                            {showPassword ? <EyeOff /> : <Eye />}
+                                        </button>
+                                    </div>
+                                    {password && passwordStrength && (
+                                        <div className="mb-4">
+                                            <div className="flex justify-between items-center mb-2">
+                                                <span className="text-sm text-slate-300">Strength: <span className={passwordStrength.color}>{passwordStrength.text}</span></span>
+                                            </div>
+                                            <div className="w-full bg-slate-600 rounded-full h-2">
+                                                <div className={`h-2 rounded-full ${passwordStrength.bg} transition-all`} style={{ width: `${(passwordStrength.text === 'Weak' ? 33 : passwordStrength.text === 'Medium' ? 66 : 100)}%` }} />
+                                            </div>
+                                        </div>
+                                    )}
+                                    <button
+                                        onClick={generatePassword}
+                                        className="w-full py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-medium transition-all"
+                                    >
+                                        Generate Secure Password
+                                    </button>
+                                </div>
+
+                                <button
+                                    onClick={processFiles}
+                                    disabled={processing || files.length === 0 || !password}
+                                    className="w-full py-4 bg-gradient-to-r from-purple-600 to-pink-600 hover:from-purple-700 hover:to-pink-700 text-white rounded-xl font-bold text-lg shadow-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center justify-center gap-2"
+                                >
+                                    {processing ? (
+                                        <>
+                                            <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white" />
+                                            Processing...
+                                        </>
+                                    ) : mode === 'encrypt' ? (
+                                        <>
+                                            <Lock />
+                                            Encrypt {files.length} File{files.length !== 1 ? 's' : ''}
+                                        </>
+                                    ) : (
+                                        <>
+                                            <Unlock />
+                                            Decrypt {files.length} File{files.length !== 1 ? 's' : ''}
+                                        </>
+                                    )}
+                                </button>
+
+                                {status && (
+                                    <div className={`p-4 rounded-lg flex items-center gap-3 ${
+                                        status.includes('Success') || status.includes('successfully') 
+                                            ? 'bg-green-500/20 border border-green-500/50 text-green-300' 
+                                            : 'bg-yellow-500/20 border border-yellow-500/50 text-yellow-300'
+                                    }`}>
+                                        {status.includes('Success') || status.includes('successfully') ? <CheckCircle /> : <AlertCircle />}
+                                        {status}
+                                    </div>
+                                )}
+
+                                {processedFiles.length > 0 && (
+                                    <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-6 border border-slate-700 shadow-xl">
+                                        <div className="flex items-center justify-between mb-4">
+                                            <h2 className="text-xl font-bold text-white flex items-center gap-2">
+                                                <CheckCircle />
+                                                Processed Files ({processedFiles.length})
+                                            </h2>
+                                            {processedFiles.length > 1 && (
+                                                <button
+                                                    onClick={downloadAllAsZip}
+                                                    className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-all text-sm"
+                                                >
+                                                    Download All
+                                                </button>
+                                            )}
+                                        </div>
+                                        <div className="space-y-3">
+                                            {processedFiles.map((file, index) => (
+                                                <div key={index} className="bg-slate-700/50 p-4 rounded-lg">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex-1">
+                                                            <p className="text-white font-medium mb-1">{file.originalName}</p>
+                                                            <div className="flex items-center gap-4 text-xs text-slate-400">
+                                                                <span>{(file.size / 1024).toFixed(2)} KB</span>
+                                                                <span className="flex items-center gap-1">
+                                                                    <Clock />
+                                                                    {file.processingTime}s
+                                                                </span>
+                                                                {file.compressionRatio && (
+                                                                    <span>📦 {file.compressionRatio}%</span>
+                                                                )}
+                                                            </div>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => downloadFile(file)}
+                                                            className="ml-3 p-2 bg-green-600 hover:bg-green-700 text-white rounded-lg transition-all"
+                                                        >
+                                                            <Download />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        <div className="mt-8 grid grid-cols-1 md:grid-cols-4 gap-4 text-center">
+                            <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 border border-slate-700">
+                                <div className="text-3xl mb-2">🔒</div>
+                                <div className="text-white font-semibold mb-1">Military-Grade</div>
+                                <div className="text-slate-400 text-xs">AES-256-GCM encryption with PBKDF2 (100k+ iterations)</div>
+                            </div>
+                            <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 border border-slate-700">
+                                <div className="text-3xl mb-2">📦</div>
+                                <div className="text-white font-semibold mb-1">Batch Processing</div>
+                                <div className="text-slate-400 text-xs">Encrypt/decrypt multiple files simultaneously</div>
+                            </div>
+                            <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 border border-slate-700">
+                                <div className="text-3xl mb-2">🗜</div>
+                                <div className="text-white font-semibold mb-1">Smart Compression</div>
+                                <div className="text-slate-400 text-xs">GZIP compression for smaller encrypted files</div>
+                            </div>
+                            <div className="bg-slate-800/50 backdrop-blur-sm rounded-xl p-4 border border-slate-700">
+                                <div className="text-3xl mb-2">🛡</div>
+                                <div className="text-white font-semibold mb-1">Zero Knowledge</div>
+                                <div className="text-slate-400 text-xs">100% client-side processing, no data leaves your device</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        ReactDOM.render(<FileEncryptor />, document.getElementById('root'));
+    </script>
+</body>
+</html>
